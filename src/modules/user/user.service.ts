@@ -27,13 +27,14 @@ import {
 } from "../../utils/response/error.response";
 import { s3Event } from "../../utils/multer/s3.event";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
-import { FriendRequestRepository, PostRepository } from "../../DB/repository";
-import { PostModel } from "../../DB/model";
+import { ChatRepository, FriendRequestRepository, PostRepository } from "../../DB/repository";
+import { ChatModel, PostModel } from "../../DB/model";
 import { FriendRequestModel } from "./../../DB/model/FriendRequest.model";
 
 class UserService {
   private userModel = new UserRepository(UserModel);
   private postModel = new PostRepository(PostModel);
+  private chatModel = new ChatRepository(ChatModel)
   private friendRequestModel = new FriendRequestRepository(FriendRequestModel);
   constructor() {}
 
@@ -114,9 +115,15 @@ class UserService {
     if (!profile) {
         throw new NotFoundException("fail to find user profile")
     }
+    const groups = await this.chatModel.find({
+      filter:{
+        participants:{$in:req.user?._id as Types.ObjectId},
+        group:{$exists:true}
+      }
+    })
     return res.json({
       message: "Done",
-      data: { user: profile, decoded: req.decoded?.iat },
+      data: { user: profile, decoded: req.decoded?.iat , groups},
     });
   };
 

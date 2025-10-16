@@ -10,8 +10,10 @@ import {
   StorageEnum,
 } from "../../utils/multer/cloud.multer";
 import { endPoint } from "./user.authorization";
+import { chatRouter } from "../chat";
 
 const router = Router();
+router.use("/:userId/chat", chatRouter)
 
 router.get("/", Authentication(), userService.profile);
 router.get("/:userId/change-role", Authentication(), validation(validators.changeRole) ,userService.changeRole);
@@ -24,10 +26,10 @@ router.delete("{/:userId}/freeze-account", Authentication(), validation(validato
 router.patch(
   "/profile-image",
   Authentication(),
-//   cloudFileUpload({
-//     validation: fileValidation.image,
-//     storageApproach: StorageEnum.disk,
-//   }).single("image"),
+  cloudFileUpload({
+    validation: fileValidation.image,
+    storageApproach: StorageEnum.disk,
+  }).single("image"),
   userService.profileImage
 );
 router.patch(

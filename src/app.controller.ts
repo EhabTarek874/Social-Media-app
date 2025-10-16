@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import { resolve } from "node:path";
 config({ path: resolve("./config/.env.development") });
 // Load Express and Express Types
-import type { Response, Express, Request, NextFunction } from "express";
+import type { Response, Express, Request } from "express";
 import express from "express";
 // import {promisify} from 'node:util'
 // import {pipeline} from 'node:stream'
@@ -15,7 +15,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 
-import {authRouter, userRouter, postRouter} from './modules'
+import {authRouter, userRouter, postRouter, initializeIo} from './modules'
 
 // import authController from "./modules/auth/auth.controller";
 // import userController from "./modules/user/user.controller";
@@ -26,8 +26,8 @@ import connectDB from "./DB/connection.db";
 import { BadRequestException, globalErrorHandling } from "./utils/response/error.response";
 import { pipeline } from "node:stream";
 import { promisify } from "node:util";
+import { chatRouter } from "./modules/chat";
  const createS3WriteStream = promisify(pipeline);
-import {Server, Socket} from "socket.io"
 
 // import { getFile, } from './utils/multer/s3.config'
 
@@ -60,6 +60,7 @@ const bootstrap = async (): Promise<void> => {
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   app.use("/post", postRouter);
+  app.use("/chat", chatRouter);
 
   //test-s3
   // app.get('/test', async(req:Request, res:Response) => {
@@ -140,24 +141,10 @@ app.get("/upload/*path", async (req:Request, res:Response):Promise<void> =>{
   await connectDB();
 
 
-  const httpServer = app.listen(port, () => {
+  const httpServer =  app.listen(port, () => {
     console.log(`Server Is Running on Port:${port} ✔`);
   });
-
-  const io = new Server(httpServer, {
-    cors:{
-      origin:"*"
-    }
-  });
-  //listen to => http://localhost:3000 
-  io.on("connection", (socket:Socket)=>{
-    console.log(socket);
-    
-    socket.on("sayHi", (data, callback)=>{
-      console.log({data});
-      callback("BE to postman")
-    })
-  })
+  initializeIo(httpServer)
 
 };
 
